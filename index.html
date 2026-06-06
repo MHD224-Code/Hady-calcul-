@@ -198,7 +198,7 @@
         }
     }
 
-    function ajouter(valeur) {
+        function ajouter(valeur) {
         let texteActuel = ecran.value;
         let start = ecran.selectionStart;
         let end = ecran.selectionEnd;
@@ -211,20 +211,21 @@
                 ecran.value = valeur;
             }
             nouvelleSaisie = false;
-            // Place le curseur à la fin après le premier chiffre
+            
+            // Focus sécurisé sans clavier mobile
             setTimeout(() => {
-                ecran.focus();
+                ecran.blur(); // Coupe l'apparition du clavier instantanément
                 let posFin = ecran.value.length;
                 ecran.setSelectionRange(posFin, posFin);
             }, 0);
         } else {
-            // Insertion précise là où se trouve le curseur (début, milieu ou fin)
+            // Insertion précise là où se trouve le curseur
             ecran.value = texteActuel.substring(0, start) + valeur + texteActuel.substring(end);
             
             // Calculer la nouvelle position logique du curseur
             let nouvellePos = start + valeur.length;
             setTimeout(() => {
-                ecran.focus();
+                ecran.blur(); // Protection anti-clavier
                 ecran.setSelectionRange(nouvellePos, nouvellePos);
             }, 0);
         }
@@ -240,20 +241,19 @@
             return;
         }
 
-        // Si du texte est sélectionné, on le supprime
         if (start !== end) {
             ecran.value = texteActuel.substring(0, start) + texteActuel.substring(end);
-            setTimeout(() => { ecran.focus(); ecran.setSelectionRange(start, start); }, 0);
+            setTimeout(() => { ecran.blur(); ecran.setSelectionRange(start, start); }, 0);
         } else if (start > 0) {
-            // Sinon, supprime le caractère juste avant le curseur
             ecran.value = texteActuel.substring(0, start - 1) + texteActuel.substring(start);
-            setTimeout(() => { ecran.focus(); ecran.setSelectionRange(start - 1, start - 1); }, 0);
+            setTimeout(() => { ecran.blur(); ecran.setSelectionRange(start - 1, start - 1); }, 0);
         }
     }
 
     function effacer() {
         ecran.value = '0';
         nouvelleSaisie = true;
+        ecran.blur();
     }
 
     function egal() {
@@ -267,6 +267,7 @@
             ecran.value = 'Erreur';
             nouvelleSaisie = true;
         }
+        ecran.blur();
     }
 
     function convertir(type) {
@@ -279,6 +280,7 @@
             ecran.value = Number((valeur * 180 / Math.PI).toFixed(4));
         }
         nouvelleSaisie = true;
+        ecran.blur();
     }
 
     function calculerSci(type) {
@@ -316,7 +318,5 @@
             ecran.value = 'Erreur';
             nouvelleSaisie = true;
         }
+        ecran.blur();
     }
-</script>
-</body>
-</html>
