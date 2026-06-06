@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hady-calcul - Version Finale Stable</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .calc-container {
+            width: 350px;
+            background-color: #1e1e1e;
+            padding: 25px;
+            border-radius: 25px;
+            box-shadow: 0px 10px 30px rgba(0,0,0,0.7);
+            border: 1px solid #2d2d2d;
+        }
+        .brand-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #2196f3;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+        .screen-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        #screen {
+            width: 100%;
+            height: 65px;
+            background-color: #2d2d2d;
+            border: none;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 26px;
+            text-align: right;
+            padding: 10px 15px;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 2;
+            caret-color: #2196f3;
+        }
+        .screen-watermark {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.08);
+            letter-spacing: 1px;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        button {
+            height: 52px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #3d3d3d;
+            color: white;
+            transition: background 0.2s, transform 0.1s;
+        }
+        button:active {
+            transform: scale(0.95);
+            filter: brightness(1.2);
+        }
+        .btn-sci {
+            background-color: #0d47a1;
+            font-size: 14px;
+        }
+        .btn-toggle {
+            background-color: #1565c0;
+            border: 1px solid #2196f3;
+        }
+        .btn-const {
+            background-color: #006064;
+            font-size: 16px;
+        }
+        .btn-op {
+            background-color: #e65100;
+        }
+        .btn-clear {
+            background-color: #b71c1c;
+        }
+        .btn-back {
+            background-color: #8d6e63;
+        }
+        .btn-equal {
+            background-color: #1b5e20;
+        }
+        
+        .mode-sci {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calc-container">
+    <div class="brand-title">Hady-calcul</div>
+    
+    <div class="screen-wrapper">
+        <input type="text" id="screen" value="0">
+        <div class="screen-watermark">HADY-TECH</div>
+    </div>
+    
+    <div class="btn-grid">
+        <button class="btn-toggle mode-std" onclick="basculerMode()">Sci</button>
+        <button class="btn-clear mode-std" onclick="effacer()">C</button>
+        <button class="btn-back mode-std" onclick="supprimerUnChiffre()">⌫</button>
+        <button class="btn-op mode-std" onclick="ajouter('/')">÷</button>
+
+        <button class="btn-toggle mode-sci" onclick="basculerMode()">Std</button>
+        <button class="btn-clear mode-sci" onclick="effacer()">C</button>
+        <button class="btn-back mode-sci" onclick="supprimerUnChiffre()">⌫</button>
+        <button class="btn-sci mode-sci" onclick="calculerSci('sin')">Sin</button>
+        
+        <button class="btn-sci mode-sci" onclick="calculerSci('cos')">Cos</button>
+        <button class="btn-sci mode-sci" onclick="calculerSci('tan')">Tan</button>
+        <button class="btn-sci mode-sci" onclick="calculerSci('sqrt')">√x</button>
+        <button class="btn-sci mode-sci" onclick="ajouter('**(1/')">ʸ√x</button>
+        
+        <button class="btn-sci mode-sci" onclick="ajouter('**')">xʸ</button>
+        <button class="btn-sci mode-sci" onclick="calculerSci('log')">Log</button>
+        <button class="btn-sci mode-sci" onclick="calculerSci('exp')">eˣ</button>
+        <button class="btn-sci mode-sci" onclick="calculerSci('ln')">Ln</button>
+        
+        <button class="btn-sci mode-sci" onclick="convertir('deg2rad')">°➔Rad</button>
+        <button class="btn-sci mode-sci" onclick="convertir('rad2deg')">Rad➔°</button>
+        <button class="btn-sci mode-sci" onclick="ajouter('(')">(</button>
+        <button class="btn-sci mode-sci" onclick="ajouter(')')">)</button>
+        
+        <button class="btn-const mode-sci" onclick="ajouter(Math.PI)">π</button>
+        <button class="btn-const mode-sci" onclick="ajouter(Math.E)">e</button>
+        <button class="btn-op mode-sci" onclick="ajouter('/')">÷</button>
+        <button class="btn-op mode-sci" onclick="ajouter('*')">x</button>
+
+        <button onclick="ajouter('7')">7</button>
+        <button onclick="ajouter('8')">8</button>
+        <button onclick="ajouter('9')">9</button>
+        <button class="btn-op mode-std" onclick="ajouter('*')">x</button>
+        <button class="btn-op mode-sci" onclick="ajouter('-')">-</button>
+        
+        <button onclick="ajouter('4')">4</button>
+        <button onclick="ajouter('5')">5</button>
+        <button onclick="ajouter('6')">6</button>
+        <button class="btn-op mode-std" onclick="ajouter('-')">-</button>
+        <button class="btn-op mode-sci" onclick="ajouter('+')">+</button>
+        
+        <button onclick="ajouter('1')">1</button>
+        <button onclick="ajouter('2')">2</button>
+        <button onclick="ajouter('3')">3</button>
+        <button class="btn-op mode-std" onclick="ajouter('+')">+</button>
+        <button class="btn-sci mode-sci" onclick="calculerSci('pourcent')">%</button>
+        
+        <button onclick="ajouter('0')">0</button>
+        <button onclick="ajouter('.')">.</button>
+        <button class="btn-sci mode-std" onclick="calculerSci('pourcent')">%</button>
+        <button class="btn-equal" onclick="egal()">=</button>
+    </div>
+</div>
+
+<script>
+    let ecran = document.getElementById('screen');
+    let nouvelleSaisie = true;
+    let modeScientifique = false;
+
+    function basculerMode() {
+        modeScientifique = !modeScientifique;
+        let boutonsStd = document.querySelectorAll('.mode-std');
+        let boutonsSci = document.querySelectorAll('.mode-sci');
+
+        if (modeScientifique) {
+            boutonsStd.forEach(btn => btn.style.display = 'none');
+            boutonsSci.forEach(btn => btn.style.display = 'block');
+        } else {
+            boutonsStd.forEach(btn => btn.style.display = 'block');
+            boutonsSci.forEach(btn => btn.style.display = 'none');
+        }
+    }
+
+    function ajouter(valeur) {
+        let texteActuel = ecran.value;
+        let start = ecran.selectionStart;
+        let end = ecran.selectionEnd;
+
+        // Si l'écran affiche 0, Erreur, ou si c'est un nouveau calcul
+        if (texteActuel === '0' || texteActuel === 'Erreur' || nouvelleSaisie) {
+            if (['+', '-', '*', '/', '**', '**(1/', ')'].includes(valeur) && texteActuel !== 'Erreur') {
+                ecran.value = texteActuel + valeur;
+            } else {
+                ecran.value = valeur;
+            }
+            nouvelleSaisie = false;
+            // Place le curseur à la fin après le premier chiffre
+            setTimeout(() => {
+                ecran.focus();
+                let posFin = ecran.value.length;
+                ecran.setSelectionRange(posFin, posFin);
+            }, 0);
+        } else {
+            // Insertion précise là où se trouve le curseur (début, milieu ou fin)
+            ecran.value = texteActuel.substring(0, start) + valeur + texteActuel.substring(end);
+            
+            // Calculer la nouvelle position logique du curseur
+            let nouvellePos = start + valeur.length;
+            setTimeout(() => {
+                ecran.focus();
+                ecran.setSelectionRange(nouvellePos, nouvellePos);
+            }, 0);
+        }
+    }
+
+    function supprimerUnChiffre() {
+        let texteActuel = ecran.value;
+        let start = ecran.selectionStart;
+        let end = ecran.selectionEnd;
+
+        if (texteActuel === 'Erreur' || texteActuel.length <= 1) {
+            effacer();
+            return;
+        }
+
+        // Si du texte est sélectionné, on le supprime
+        if (start !== end) {
+            ecran.value = texteActuel.substring(0, start) + texteActuel.substring(end);
+            setTimeout(() => { ecran.focus(); ecran.setSelectionRange(start, start); }, 0);
+        } else if (start > 0) {
+            // Sinon, supprime le caractère juste avant le curseur
+            ecran.value = texteActuel.substring(0, start - 1) + texteActuel.substring(start);
+            setTimeout(() => { ecran.focus(); ecran.setSelectionRange(start - 1, start - 1); }, 0);
+        }
+    }
+
+    function effacer() {
+        ecran.value = '0';
+        nouvelleSaisie = true;
+    }
+
+    function egal() {
+        try {
+            let resultat = eval(ecran.value);
+            if (resultat === Infinity || isNaN(resultat)) throw "Erreur";
+            
+            ecran.value = Number(resultat.toFixed(6));
+            nouvelleSaisie = true;
+        } catch (e) {
+            ecran.value = 'Erreur';
+            nouvelleSaisie = true;
+        }
+    }
+
+    function convertir(type) {
+        let valeur = parseFloat(ecran.value);
+        if (isNaN(valeur)) return;
+
+        if (type === 'deg2rad') {
+            ecran.value = Number((valeur * Math.PI / 180).toFixed(6));
+        } else if (type === 'rad2deg') {
+            ecran.value = Number((valeur * 180 / Math.PI).toFixed(4));
+        }
+        nouvelleSaisie = true;
+    }
+
+    function calculerSci(type) {
+        let valeur = parseFloat(ecran.value);
+        if (isNaN(valeur)) {
+            try { valeur = eval(ecran.value); } catch(e) { ecran.value = 'Erreur'; return; }
+        }
+
+        try {
+            let valeurRad = valeur * Math.PI / 180;
+
+            if (type === 'sin') ecran.value = Number(Math.sin(valeurRad).toFixed(6));
+            if (type === 'cos') ecran.value = Number(Math.cos(valeurRad).toFixed(6));
+            if (type === 'tan') {
+                if (Math.abs(Math.cos(valeurRad)) < 1e-10) throw "Erreur";
+                ecran.value = Number(Math.tan(valeurRad).toFixed(6));
+            }
+            if (type === 'sqrt') {
+                if (valeur < 0) throw "Erreur";
+                ecran.value = Number(Math.sqrt(valeur).toFixed(6));
+            }
+            if (type === 'log') {
+                if (valeur <= 0) throw "Erreur";
+                ecran.value = Number(Math.log10(valeur).toFixed(6));
+            }
+            if (type === 'ln') {
+                if (valeur <= 0) throw "Erreur";
+                ecran.value = Number(Math.log(valeur).toFixed(6));
+            }
+            if (type === 'exp') ecran.value = Number(Math.exp(valeur).toFixed(6));
+            if (type === 'pourcent') ecran.value = Number((valeur / 100).toFixed(6));
+            
+            nouvelleSaisie = true;
+        } catch (e) {
+            ecran.value = 'Erreur';
+            nouvelleSaisie = true;
+        }
+    }
+</script>
+</body>
+</html>
