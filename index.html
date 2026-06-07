@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hady-calcul - Version Finale Incassable</title>
+    <title>Hady-calcul - Version Finale Stable</title>
     <style>
         body {
             background-color: #121212;
@@ -14,10 +14,11 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            user-select: none; /* Empêche la sélection bleue moche sur mobile */
         }
         .calc-container {
-            width: 350px;
+            width: 90%;
+            max-width: 350px;
+            box-sizing: border-box; /* Sécurité pour que le padding ne déforme pas la taille */
             background-color: #1e1e1e;
             padding: 25px;
             border-radius: 25px;
@@ -37,7 +38,6 @@
             position: relative;
             margin-bottom: 20px;
         }
-        /* Transformation de l'input en div stylisée */
         #screen {
             width: 100%;
             height: 65px;
@@ -51,11 +51,7 @@
             box-sizing: border-box;
             position: relative;
             z-index: 2;
-            overflow-x: auto;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
+            caret-color: #2196f3;
         }
         .screen-watermark {
             position: absolute;
@@ -117,15 +113,73 @@
         .mode-sci {
             display: none;
         }
+        /* ================= ÉCRAN DE BIENVENUE (SPLASH SCREEN) ================= */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #121212;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out, visibility 0.5s;
+        }
+        .splash-logo {
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #2196f3;
+            text-transform: uppercase;
+            animation: zoomIn 1.2s ease-out forwards;
+            opacity: 0;
+        }
+        .splash-subtitle {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 12px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            animation: fadeIn 1.5s ease-out forwards;
+            animation-delay: 0.3s;
+            opacity: 0;
+        }
+        
+        @keyframes zoomIn {
+            0% { transform: scale(0.85); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        /* Effet d'apparition pour la calculatrice */
+        .calc-container {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .calc-container.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
+<div id="splash-screen">
+    <div class="splash-logo">Bienvenue</div>
+    <div class="splash-subtitle">Dans Hady-calcul</div>
+</div>
 
-<div class="calc-container">
+<div class="calc-container" id="calc-app">
     <div class="brand-title">Hady-calcul</div>
     
     <div class="screen-wrapper">
-        <div id="screen">0</div>
+        <input type="text" id="screen" value="0">
         <div class="screen-watermark">HADY-TECH</div>
     </div>
     
@@ -186,6 +240,17 @@
 </div>
 
 <script>
+    // GESTION DU SPLASH SCREEN
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            let splash = document.getElementById('splash-screen');
+            let app = document.getElementById('calc-app');
+            
+            splash.style.opacity = '0';
+            splash.style.visibility = 'hidden';
+            app.classList.add('show');
+        }, 2000);
+    });
     let ecran = document.getElementById('screen');
     let nouvelleSaisie = true;
     let modeScientifique = false;
@@ -205,96 +270,121 @@
     }
 
     function ajouter(valeur) {
-        let texteActuel = ecran.innerText;
+        let texteActuel = ecran.value;
+        let start = ecran.selectionStart;
+        let end = ecran.selectionEnd;
 
+        // Si l'écran affiche 0, Erreur, ou si c'est un nouveau calcul
         if (texteActuel === '0' || texteActuel === 'Erreur' || nouvelleSaisie) {
             if (['+', '-', '*', '/', '**', '**(1/', ')'].includes(valeur) && texteActuel !== 'Erreur') {
-                ecran.innerText = texteActuel + valeur;
+                ecran.value = texteActuel + valeur;
             } else {
-                ecran.innerText = valeur;
+                ecran.value = valeur;
             }
             nouvelleSaisie = false;
+            // Place le curseur à la fin après le premier chiffre
+            setTimeout(() => {
+                ecran.focus();
+                let posFin = ecran.value.length;
+                ecran.setSelectionRange(posFin, posFin);
+            }, 0);
         } else {
-            // Écriture normale et fluide de gauche à droite
-            ecran.innerText = texteActuel + valeur;
+            // Insertion précise là où se trouve le curseur (début, milieu ou fin)
+            ecran.value = texteActuel.substring(0, start) + valeur + texteActuel.substring(end);
+            
+            // Calculer la nouvelle position logique du curseur
+            let nouvellePos = start + valeur.length;
+            setTimeout(() => {
+                ecran.focus();
+                ecran.setSelectionRange(nouvellePos, nouvellePos);
+            }, 0);
         }
     }
 
     function supprimerUnChiffre() {
-        let texteActuel = ecran.innerText;
+        let texteActuel = ecran.value;
+        let start = ecran.selectionStart;
+        let end = ecran.selectionEnd;
 
         if (texteActuel === 'Erreur' || texteActuel.length <= 1) {
             effacer();
             return;
         }
 
-        // Supprime le tout dernier caractère saisis
-        ecran.innerText = texteActuel.substring(0, texteActuel.length - 1);
+        // Si du texte est sélectionné, on le supprime
+        if (start !== end) {
+            ecran.value = texteActuel.substring(0, start) + texteActuel.substring(end);
+            setTimeout(() => { ecran.focus(); ecran.setSelectionRange(start, start); }, 0);
+        } else if (start > 0) {
+            // Sinon, supprime le caractère juste avant le curseur
+            ecran.value = texteActuel.substring(0, start - 1) + texteActuel.substring(start);
+            setTimeout(() => { ecran.focus(); ecran.setSelectionRange(start - 1, start - 1); }, 0);
+        }
     }
 
     function effacer() {
-        ecran.innerText = '0';
+        ecran.value = '0';
         nouvelleSaisie = true;
     }
 
     function egal() {
         try {
-            let resultat = eval(ecran.innerText);
+            let resultat = eval(ecran.value);
             if (resultat === Infinity || isNaN(resultat)) throw "Erreur";
             
-            ecran.innerText = Number(resultat.toFixed(6));
+            ecran.value = Number(resultat.toFixed(6));
             nouvelleSaisie = true;
         } catch (e) {
-            ecran.innerText = 'Erreur';
+            ecran.value = 'Erreur';
             nouvelleSaisie = true;
         }
     }
 
     function convertir(type) {
-        let valeur = parseFloat(ecran.innerText);
+        let valeur = parseFloat(ecran.value);
         if (isNaN(valeur)) return;
 
         if (type === 'deg2rad') {
-            ecran.innerText = Number((valeur * Math.PI / 180).toFixed(6));
+            ecran.value = Number((valeur * Math.PI / 180).toFixed(6));
         } else if (type === 'rad2deg') {
-            ecran.innerText = Number((valeur * 180 / Math.PI).toFixed(4));
+            ecran.value = Number((valeur * 180 / Math.PI).toFixed(4));
         }
         nouvelleSaisie = true;
     }
 
     function calculerSci(type) {
-        let valeur = parseFloat(ecran.innerText);
+        let valeur = parseFloat(ecran.value);
         if (isNaN(valeur)) {
-            try { valeur = eval(ecran.innerText); } catch(e) { ecran.innerText = 'Erreur'; return; }
+            try { valeur = eval(ecran.value); } catch(e) { ecran.value = 'Erreur'; return; }
         }
 
         try {
             let valeurRad = valeur * Math.PI / 180;
 
-            if (type === 'sin') ecran.innerText = Number(Math.sin(valeurRad).toFixed(6));
-            if (type === 'cos') ecran.innerText = Number(Math.cos(valeurRad).toFixed(6));
+            if (type === 'sin') ecran.value = Number(Math.sin(valeurRad).toFixed(6));
+            if (type === 'cos') ecran.value = Number(Math.cos(valeurRad).toFixed(6));
             if (type === 'tan') {
                 if (Math.abs(Math.cos(valeurRad)) < 1e-10) throw "Erreur";
-                ecran.innerText = Number(Math.tan(valeurRad).toFixed(6));
+                ecran.value = Number(Math.tan(valeurRad).toFixed(6));
             }
             if (type === 'sqrt') {
                 if (valeur < 0) throw "Erreur";
-                ecran.innerText = Number(Math.sqrt(valeur).toFixed(6));
+                ecran.value = Number(Math.sqrt(valeur).toFixed(6));
             }
             if (type === 'log') {
                 if (valeur <= 0) throw "Erreur";
-                ecran.innerText = Number(Math.log10(valeur).toFixed(6));
+                ecran.value = Number(Math.log10(valeur).toFixed(6));
             }
             if (type === 'ln') {
                 if (valeur <= 0) throw "Erreur";
-                ecran.innerText = Number(Math.log(valeur).toFixed(6));
+                ecran.value = Number(Math.log(valeur).toFixed(6));
             }
-            if (type === 'exp') ecran.innerText = Number(Math.exp(valeur).toFixed(6));
-            if (type === 'pourcent') ecran.innerText = Number((valeur / 100).toFixed(6));
+            if (type === 'exp') ecran.value = Number(Math.exp(valeur).toFixed(6));
+            if (type === 'pourcent') ecran.value = Number((valeur / 100).toFixed(6));
             
             nouvelleSaisie = true;
         } catch (e) {
-            ecran.innerText = 'Erreur';
+            ecran.value = 'Erreur';
             nouvelleSaisie = true;
         }
     }
